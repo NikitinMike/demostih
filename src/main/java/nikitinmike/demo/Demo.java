@@ -22,27 +22,34 @@ import static java.lang.Class.forName;
 @AllArgsConstructor
 public class Demo {
 
-//    @RequestMapping("/")
+    @RequestMapping("/demo")
     private String demo() throws Exception {
-        String catalog = getPage("http://www.stihi.ru/poems/list.html?day=20&month=02&year=2018&topic=all");
-//        System.out.println();
-//        return getLinks(catalog).toString();
-        return stihiStrip(getPage("http://www.stihi.ru/2016/10/28/1984")); // "http://www.stihi.ru/2012/02/20/7572"
 //        "http://www.stihi.ru/poems/list.html?topic=all"
+        String catalog = getPage("http://www.stihi.ru/poems/list.html?day=20&month=02&year=2018&topic=all");
+        System.out.println(stihiStrip(getPage("http://www.stihi.ru/2016/10/28/1984")));
+//        return getLinks(catalog).toString();
+        return catalog;
     }
-    
+
     @RequestMapping("/")
-    private List<String> getLinks(
-            @RequestParam(defaultValue = "http://www.stihi.ru/poems/list.html?topic=all") String html
+    private List<String> getLinks( // "http://www.stihi.ru/poems/list.html?topic=all"
+            @RequestParam(defaultValue = "http://www.stihi.ru/poems/list.html?type=selected") String html
     ) throws Exception {
 //        System.out.println(html);
         String root="http://www.stihi.ru";
-        Matcher m = Pattern.compile("<a href=\"" +"(.+?)"+"\">").matcher(getPage(html)); // <div class="copyright">
+        Matcher m = Pattern.compile("<a href=(.+?)>").matcher(getPage(html));
         List<String> ls=new ArrayList();
+        List<String> stihi=new ArrayList();
         while (m.find())
-            if (!Pattern.compile(root).matcher(m.group(1)).find()) ls.add(root+m.group(1));
-            else ls.add(m.group(1));
-        return ls;
+            if (!Pattern.compile(root).matcher(m.group(1)).find())
+                if (Pattern.compile("poemlink").matcher(m.group(1)).find()) // "authorlink" // poemlink
+                    stihi.add(root+
+                        Pattern.compile("\"").matcher(
+                            Pattern.compile(" class=\".+\"").matcher(m.group(1)).replaceFirst("")
+                        ).replaceAll("")
+                    );
+                else ls.add(m.group(1));
+        return stihi;
     }
 
     private String getPage(String s) throws Exception {
@@ -55,9 +62,10 @@ public class Demo {
         return result.toString();
     }
 
-    private String stihiStrip(String html){
-        Matcher m = Pattern.compile("<div class=\"text\">" +"(.+?)"+"</div>").matcher(html.toString()); // <div class="copyright">
-        if (m.find( )) return Pattern.compile("&nbsp;|&quot;")
+    @RequestMapping("/stihi")
+    private String stihiStrip(@RequestParam String url) throws Exception { // <div class="copyright">
+        Matcher m = Pattern.compile("<div class=\"text\">(.+?)</div>").matcher(getPage(url));
+        if (m.find()) return Pattern.compile("&nbsp;|&quot;")
             .matcher(Pattern.compile("<br>").matcher(m.group(1)).replaceAll("\n"))
             .replaceAll(" ");
         return "";
