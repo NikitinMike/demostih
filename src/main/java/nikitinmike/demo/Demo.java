@@ -43,7 +43,7 @@ public class Demo {
         while (m.find())
             if (!Pattern.compile(root).matcher(m.group(1)).find())
                 if (Pattern.compile("poemlink").matcher(m.group(1)).find()) // "authorlink" // poemlink
-                    stihi.add(root+
+                    stihi.add("http://localhost:8080/stihi?url=" +root+
                         Pattern.compile("\"").matcher(
                             Pattern.compile(" class=\".+\"").matcher(m.group(1)).replaceFirst("")
                         ).replaceAll("")
