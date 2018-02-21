@@ -1,6 +1,7 @@
 package nikitinmike.demo;
 
 import lombok.AllArgsConstructor;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,6 +13,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,33 +24,45 @@ import static java.lang.Class.forName;
 @AllArgsConstructor
 public class Demo {
 
-    @RequestMapping("/demo")
-    private String demo() throws Exception {
-//        "http://www.stihi.ru/poems/list.html?topic=all"
-        String catalog = getPage("http://www.stihi.ru/poems/list.html?day=20&month=02&year=2018&topic=all");
-        System.out.println(stihiStrip(getPage("http://www.stihi.ru/2016/10/28/1984")));
+//    @RequestMapping("/demo")
+    private String demo(
+        @RequestParam(defaultValue = "http://www.stihi.ru/poems/list.html?topic=all") String url
+    ) throws Exception {
+        String catalog = getPage("http://www.stihi.ru/poems/list.html?topic=all");
+//        String catalog = getPage("http://www.stihi.ru/poems/list.html?day=20&month=02&year=2018&topic=all");
+//        System.out.println(stihiStrip(getPage("http://www.stihi.ru/2016/10/28/1984")));
 //        return getLinks(catalog).toString();
         return catalog;
     }
 
     @RequestMapping("/")
-    private List<String> getLinks( // "http://www.stihi.ru/poems/list.html?topic=all"
-            @RequestParam(defaultValue = "http://www.stihi.ru/poems/list.html?type=selected") String html
-    ) throws Exception {
-//        System.out.println(html);
-        String root="http://www.stihi.ru";
-        Matcher m = Pattern.compile("<a href=(.+?)>").matcher(getPage(html));
-        List<String> ls=new ArrayList();
-        List<String> stihi=new ArrayList();
+    private List<String> getLinks(
+//        @PathVariable String path,
+        @RequestParam(defaultValue = "http://www.stihi.ru/poems/list.html?type=selected") String url,
+        @RequestParam(required=false) Integer year,
+        @RequestParam(required=false) Integer month,
+        @RequestParam(required=false) Integer day
+        ) throws Exception {
+//        System.out.println(path);
+        System.out.println(url);
+//        System.out.println(new Object[]{year,month,day}.toString());
+        String root="http://www.stihi.ru",local="http://localhost:8080";
+        Matcher m = Pattern.compile("<a href=(.+?)>").matcher(getPage(url));
+        List<String> ls=new ArrayList(),stihi=new ArrayList();
         while (m.find())
             if (!Pattern.compile(root).matcher(m.group(1)).find())
-                if (Pattern.compile("poemlink").matcher(m.group(1)).find()) // "authorlink" // poemlink
-                    stihi.add("http://localhost:8080/stihi?url=" +root+
+                if (Pattern.compile("poemlink").matcher(m.group(1)).find())
+                    stihi.add(local+"/stihi?url=" +root+
                         Pattern.compile("\"").matcher(
                             Pattern.compile(" class=\".+\"").matcher(m.group(1)).replaceFirst("")
                         ).replaceAll("")
                     );
-                else ls.add(m.group(1));
+                else ls.add(local+"/?url=" +root+
+                    Pattern.compile("\"").matcher( // authorlink
+                        Pattern.compile(" class=\".+\"").matcher(m.group(1)).replaceFirst("")
+                    ).replaceAll("")
+                );
+        stihi.addAll(ls);
         return stihi;
     }
 
