@@ -1,7 +1,6 @@
 package nikitinmike.demo;
 
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -10,15 +9,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLDecoder;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static java.lang.Class.forName;
 
 @RestController
 @AllArgsConstructor
@@ -38,14 +32,16 @@ public class Demo {
     @RequestMapping("/")
     private List<String> getLinks(
 //        @PathVariable String path,
-        @RequestParam(defaultValue = "http://www.stihi.ru/poems/list.html?type=selected") String url,
-        @RequestParam(required=false) Integer year,
-        @RequestParam(required=false) Integer month,
-        @RequestParam(required=false) Integer day
+//      "http://www.stihi.ru/poems/list.html?type=all" // selected
+        @RequestParam(defaultValue = "http://www.stihi.ru/poems/list.html?topic=all" ) String url
+//        @RequestParam(required=false) Integer year,
+//        @RequestParam(required=false) Integer month,
+//        @RequestParam(required=false) Integer day
         ) throws Exception {
 //        System.out.println(path);
         System.out.println(url);
-//        System.out.println(new Object[]{year,month,day}.toString());
+//        System.out.printf(" %d-%d-%d ",year,month,day);
+//        if (year!=null&&month!=null&&day!=null) System.out.println(LocalDate.of(year,month,day));
         String root="http://www.stihi.ru",local="http://localhost:8080";
         Matcher m = Pattern.compile("<a href=(.+?)>").matcher(getPage(url));
         List<String> ls=new ArrayList(),stihi=new ArrayList();
@@ -58,8 +54,10 @@ public class Demo {
                         ).replaceAll("")
                     );
                 else ls.add(local+"/?url=" +root+
-                    Pattern.compile("\"").matcher( // authorlink
-                        Pattern.compile(" class=\".+\"").matcher(m.group(1)).replaceFirst("")
+                    Pattern.compile("\"").matcher(
+                        Pattern.compile("&").matcher(
+                            Pattern.compile(" class=\".+\"").matcher(m.group(1)).replaceFirst("") // authorlink
+                        ).replaceAll("%26") // "&amp;"
                     ).replaceAll("")
                 );
         stihi.addAll(ls);
